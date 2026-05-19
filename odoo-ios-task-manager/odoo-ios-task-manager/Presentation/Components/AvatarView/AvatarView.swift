@@ -12,7 +12,6 @@ import Combine
 class ImageCacheManager: ObservableObject {
     static let shared = ImageCacheManager()
     private var cache: [String: UIImage] = [:]
-    private var loadingTasks: [String: Task] = [:]
     
     func getCachedImage(url: String) -> UIImage? {
         return cache[url]
@@ -22,17 +21,6 @@ class ImageCacheManager: ObservableObject {
         cache[url] = image
     }
     
-    func isLoading(url: String) -> Bool {
-        return loadingTasks[url] != nil
-    }
-    
-    func setLoading(url: String, task: Task) {
-        loadingTasks[url] = task
-    }
-    
-    func removeLoading(url: String) {
-        loadingTasks.removeValue(forKey: url)
-    }
 }
 
 // MARK: - Cached Async Image

@@ -76,7 +76,7 @@ final class OdooRepositoryImpl: OdooRepositoryProtocol {
         return stages.map(map)
     }
 
-    func createTask(name: String, description: String, projectId: Int, deadline: String?) async throws {
+    func createTask(name: String, description: String, projectId: Int, stageId: Int?, deadline: String?) async throws {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedDescription = description.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else {
@@ -97,6 +97,7 @@ final class OdooRepositoryImpl: OdooRepositoryProtocol {
             name: trimmedName,
             description: trimmedDescription,
             projectId: projectId,
+            stageId: stageId,
             deadline: deadline
         )
     }

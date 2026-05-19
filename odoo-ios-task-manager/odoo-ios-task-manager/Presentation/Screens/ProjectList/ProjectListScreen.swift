@@ -109,7 +109,7 @@ private final class FailingPreviewOdooRemoteDataSource: OdooRemoteDataSourceProt
     func fetchProjects(uid: Int, password: String) async throws -> [ProjectDTO] { [] }
     func fetchTasks(uid: Int, password: String, projectId: Int, assignedOnly: Bool) async throws -> [TaskDTO] { [] }
     func fetchTaskStages(uid: Int, password: String) async throws -> [TaskStageDTO] { [] }
-    func createTask(uid: Int, password: String, name: String, description: String, projectId: Int, deadline: String?) async throws {}
+    func createTask(uid: Int, password: String, name: String, description: String, projectId: Int, stageId: Int?, deadline: String?) async throws {}
     func updateTaskStatus(uid: Int, password: String, taskId: Int, stageId: Int) async throws {}
     func updateUserName(uid: Int, password: String, name: String) async throws {}
 }

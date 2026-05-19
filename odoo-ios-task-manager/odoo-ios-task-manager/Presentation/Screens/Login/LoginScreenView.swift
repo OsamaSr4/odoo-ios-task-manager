@@ -4,8 +4,6 @@ struct LoginScreenView: View {
     @ObservedObject var viewModel: LoginViewModel
     @State private var email = OdooConfig.defaultUsername
     @State private var password = OdooConfig.defaultPassword
-    @State private var rememberMe = false
-    @State private var selectedRole = "Employee"
     
     init(viewModel: LoginViewModel = AppDependencyContainer.makeAppViewModels().loginViewModel) {
         self.viewModel = viewModel

@@ -48,10 +48,15 @@ final class TaskViewModel: ObservableObject {
                 throw OdooError.validation("Please select a project first.")
             }
 
+            if taskStatusOptions.isEmpty {
+                self.taskStatusOptions = try await makeStatusOptions()
+            }
+
             try await createTaskUseCase.execute(
                 name: name,
                 description: description,
                 projectId: selectedProject.id,
+                stageId: pendingStageId,
                 deadline: deadline
             )
             self.tasks = try await fetchTasksUseCase.execute(projectId: selectedProject.id)
@@ -65,10 +70,6 @@ final class TaskViewModel: ObservableObject {
                 self.tasks = try await fetchTasksUseCase.execute(projectId: selectedProject.id)
             }
         }
-    }
-
-    func stageId(for status: TaskStatus) -> Int? {
-        taskStatusOptions.first { $0.status == status }?.stageId
     }
 
     func updateUserName(name: String) async {
@@ -111,6 +112,10 @@ final class TaskViewModel: ObservableObject {
             inProgress.map { TaskStatusOption(status: .inProgress, stageId: $0.id, stageName: $0.name) },
             completed.map { TaskStatusOption(status: .completed, stageId: $0.id, stageName: $0.name) }
         ].compactMap { $0 }
+    }
+
+    private var pendingStageId: Int? {
+        taskStatusOptions.first { $0.status == .pending }?.stageId
     }
 
     private func bestStage(for status: TaskStatus, in stages: [TaskStageEntity]) -> TaskStageEntity? {

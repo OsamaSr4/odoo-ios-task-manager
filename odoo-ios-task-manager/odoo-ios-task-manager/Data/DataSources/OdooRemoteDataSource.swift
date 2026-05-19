@@ -5,7 +5,7 @@ protocol OdooRemoteDataSourceProtocol {
     func fetchProjects(uid: Int, password: String) async throws -> [ProjectDTO]
     func fetchTasks(uid: Int, password: String, projectId: Int, assignedOnly: Bool) async throws -> [TaskDTO]
     func fetchTaskStages(uid: Int, password: String) async throws -> [TaskStageDTO]
-    func createTask(uid: Int, password: String, name: String, description: String, projectId: Int, deadline: String?) async throws
+    func createTask(uid: Int, password: String, name: String, description: String, projectId: Int, stageId: Int?, deadline: String?) async throws
     func updateTaskStatus(uid: Int, password: String, taskId: Int, stageId: Int) async throws
     func updateUserName(uid: Int, password: String, name: String) async throws
 }
@@ -146,7 +146,7 @@ final class OdooRemoteDataSource: OdooRemoteDataSourceProtocol {
         return stageValues.compactMap(TaskStageDTO.init(json:))
     }
 
-    func createTask(uid: Int, password: String, name: String, description: String, projectId: Int, deadline: String?) async throws {
+    func createTask(uid: Int, password: String, name: String, description: String, projectId: Int, stageId: Int?, deadline: String?) async throws {
         var values: [String: JSONValue] = [
             "name": .string(name),
             "project_id": .int(projectId),
@@ -154,6 +154,10 @@ final class OdooRemoteDataSource: OdooRemoteDataSourceProtocol {
                 .array([.int(6), .int(0), .array([.int(uid)])])
             ])
         ]
+
+        if let stageId {
+            values["stage_id"] = .int(stageId)
+        }
 
         if !description.isEmpty {
             values["description"] = .string(description)

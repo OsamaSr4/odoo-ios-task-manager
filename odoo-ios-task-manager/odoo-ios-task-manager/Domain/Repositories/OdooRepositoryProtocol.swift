@@ -6,7 +6,7 @@ protocol OdooRepositoryProtocol {
     func fetchProjects() async throws -> [ProjectEntity]
     func fetchTasks(projectId: Int) async throws -> [TaskEntity]
     func fetchTaskStages() async throws -> [TaskStageEntity]
-    func createTask(name: String, description: String, projectId: Int, deadline: String?) async throws
+    func createTask(name: String, description: String, projectId: Int, stageId: Int?, deadline: String?) async throws
     func updateTaskStatus(taskId: Int, stageId: Int) async throws
     func updateUserName(name: String) async throws
 }
