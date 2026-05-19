@@ -5,22 +5,25 @@ struct AppText: View {
     let variant: AppTextVariant
     let color: Color
     let alignment: TextAlignment
+    let size: CGFloat
     
     init(
         _ text: String,
         variant: AppTextVariant = .regular,
         color: Color = .primary,
-        alignment: TextAlignment = .leading
+        alignment: TextAlignment = .leading,
+        size: CGFloat = 16
     ) {
         self.text = text
         self.variant = variant
         self.color = color
         self.alignment = alignment
+        self.size = size
     }
     
     var body: some View {
         Text(text)
-            .font(variant.font)
+            .font(variant.font(size: size))
             .foregroundColor(color)
             .multilineTextAlignment(alignment)
     }
@@ -31,14 +34,14 @@ enum AppTextVariant {
     case medium
     case regular
     
-    var font: Font {
+    func font(size: CGFloat = 16) -> Font {
         switch self {
         case .bold:
-            return .system(size: 16, weight: .bold)
+            return .system(size: size, weight: .bold)
         case .medium:
-            return .system(size: 16, weight: .medium)
+            return .system(size: size, weight: .medium)
         case .regular:
-            return .system(size: 16, weight: .regular)
+            return .system(size: size, weight: .regular)
         }
     }
 }
@@ -64,6 +67,13 @@ enum AppTextVariant {
                 .frame(maxWidth: .infinity)
             AppText("Trailing Alignment", alignment: .trailing)
                 .frame(maxWidth: .infinity)
+        }
+        
+        Group {
+            AppText("Small Text", size: 12)
+            AppText("Default Text", size: 16)
+            AppText("Large Text", size: 20)
+            AppText("Extra Large Text", size: 24)
         }
     }
     .padding()

@@ -29,9 +29,22 @@
 		37BCA6592FAFC9940019B4BC /* odoo-ios-task-managerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "odoo-ios-task-managerUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		37BCA6B42FB06D750019B4BC /* Exceptions for "odoo-ios-task-manager" folder in "odoo-ios-task-manager" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 37BCA6412FAFC9920019B4BC /* odoo-ios-task-manager */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		37BCA6442FAFC9920019B4BC /* odoo-ios-task-manager */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				37BCA6B42FB06D750019B4BC /* Exceptions for "odoo-ios-task-manager" folder in "odoo-ios-task-manager" target */,
+			);
 			path = "odoo-ios-task-manager";
 			sourceTree = "<group>";
 		};
@@ -397,6 +410,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "odoo-ios-task-manager/Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -428,6 +442,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "odoo-ios-task-manager/Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
