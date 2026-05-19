@@ -2,19 +2,18 @@ import SwiftUI
 
 struct TaskListScreen: View {
     @ObservedObject var viewModel: TaskViewModel
+    let project: ProjectEntity
+    let onBackPressed: () -> Void
     @State private var selectedTask: TaskEntity?
     
     @State private var showCreateTaskSheet = false
-    @State private var showUpdateProfileSheet = false
     
     var body: some View {
         VStack(spacing: 0) {
-            // AppBar
-            AppBar(title: "Tasks") {
-                AvatarView.small(name: viewModel.username) {
-                    showUpdateProfileSheet.toggle()
-                }
-            } rightContent: {
+            AppBar(
+                title: "Tasks",
+                onBackPressed: onBackPressed
+            ) {
                 Image(systemName: "plus")
                     .font(.system(size: 24, weight: .semibold))
                     .foregroundColor(.primary)
@@ -25,12 +24,11 @@ struct TaskListScreen: View {
             // Main content
             ScrollView {
                 VStack(spacing: 20) {
-                    // Welcome message
                     VStack(alignment: .leading, spacing: 8) {
-                        AppText("Welcome", variant: .bold, size: 24)
+                        AppText(project.name, variant: .bold, size: 24)
                             .foregroundColor(.primary)
                         
-                        AppText(viewModel.username, variant: .medium, size: 18)
+                        AppText("Tasks", variant: .medium, size: 18)
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -67,16 +65,7 @@ struct TaskListScreen: View {
         }
         .navigationBarHidden(true)
         .task {
-            if viewModel.tasks.isEmpty {
-                await viewModel.loadTasks()
-            }
-        }
-        .sheet(isPresented: $showUpdateProfileSheet) {
-            UpdateProfileSheet(isPresented: $showUpdateProfileSheet, username: viewModel.username) { updatedUsername in
-                _Concurrency.Task {
-                    await viewModel.updateUserName(name: updatedUsername)
-                }
-            }
+            await viewModel.loadTasks(for: project)
         }
         .sheet(isPresented: $showCreateTaskSheet) {
             CreateTaskSheet(
@@ -106,7 +95,6 @@ struct TaskListScreen: View {
             await viewModel.createTask(
                 name: name,
                 description: description,
-                projectId: OdooConfig.defaultProjectId,
                 deadline: deadline
             )
         }
@@ -122,5 +110,9 @@ struct TaskListScreen: View {
 }
 
 #Preview {
-    TaskListScreen(viewModel: AppDependencyContainer.makeTaskViewModel())
+    TaskListScreen(
+        viewModel: AppDependencyContainer.makeTaskViewModel(),
+        project: ProjectEntity(id: 1, name: "Sample Project"),
+        onBackPressed: {}
+    )
 }

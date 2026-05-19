@@ -2,7 +2,8 @@ import Foundation
 
 protocol OdooRemoteDataSourceProtocol {
     func login(username: String, password: String) async throws -> Int
-    func fetchTasks(uid: Int, password: String, assignedOnly: Bool) async throws -> [TaskDTO]
+    func fetchProjects(uid: Int, password: String) async throws -> [ProjectDTO]
+    func fetchTasks(uid: Int, password: String, projectId: Int, assignedOnly: Bool) async throws -> [TaskDTO]
     func fetchTaskStages(uid: Int, password: String) async throws -> [TaskStageDTO]
     func createTask(uid: Int, password: String, name: String, description: String, projectId: Int, deadline: String?) async throws
     func updateTaskStatus(uid: Int, password: String, taskId: Int, stageId: Int) async throws
@@ -39,14 +40,53 @@ final class OdooRemoteDataSource: OdooRemoteDataSourceProtocol {
         return uid
     }
 
-    func fetchTasks(uid: Int, password: String, assignedOnly: Bool) async throws -> [TaskDTO] {
+    func fetchProjects(uid: Int, password: String) async throws -> [ProjectDTO] {
+        let result = try await client.call(
+            service: "object",
+            method: "execute_kw",
+            args: [
+                .string(OdooConfig.database),
+                .int(uid),
+                .string(password),
+                .string("project.project"),
+                .string("search_read"),
+                .array([.array([])]),
+                .object([
+                    "fields": .array([
+                        .string("id"),
+                        .string("name")
+                    ]),
+                    "limit": .int(50)
+                ])
+            ]
+        )
+
+        guard let projectValues = result.arrayValue else {
+            throw OdooError.decodingError
+        }
+
+        return projectValues.compactMap(ProjectDTO.init(json:))
+    }
+
+    func fetchTasks(uid: Int, password: String, projectId: Int, assignedOnly: Bool) async throws -> [TaskDTO] {
         let domain: JSONValue = assignedOnly ? .array([
+            .array([
+                .string("project_id"),
+                .string("="),
+                .int(projectId)
+            ]),
             .array([
                 .string("user_ids"),
                 .string("in"),
                 .array([.int(uid)])
             ])
-        ]) : .array([])
+        ]) : .array([
+            .array([
+                .string("project_id"),
+                .string("="),
+                .int(projectId)
+            ])
+        ])
 
         let result = try await client.call(
             service: "object",

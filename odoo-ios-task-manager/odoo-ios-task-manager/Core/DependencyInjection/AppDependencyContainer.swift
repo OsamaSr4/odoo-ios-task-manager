@@ -2,6 +2,7 @@ import Foundation
 
 struct AppViewModels {
     let loginViewModel: LoginViewModel
+    let projectListViewModel: ProjectListViewModel
     let taskViewModel: TaskViewModel
 }
 
@@ -12,10 +13,10 @@ enum AppDependencyContainer {
             let dataSource = OdooRemoteDataSource(client: client)
             let repository = OdooRepositoryImpl(remoteDataSource: dataSource)
 
-            return makeViewModels(repository: repository)
+            return makeViewModels(repository: repository, sessionStore: OdooSessionStore())
         } catch {
             let repository = OdooRepositoryImpl(remoteDataSource: FailingOdooRemoteDataSource(error: error))
-            return makeViewModels(repository: repository)
+            return makeViewModels(repository: repository, sessionStore: OdooSessionStore())
         }
     }
 
@@ -23,10 +24,18 @@ enum AppDependencyContainer {
         makeAppViewModels().taskViewModel
     }
 
-    private static func makeViewModels(repository: OdooRepositoryProtocol) -> AppViewModels {
+    private static func makeViewModels(
+        repository: OdooRepositoryProtocol,
+        sessionStore: OdooSessionStoreProtocol
+    ) -> AppViewModels {
         AppViewModels(
             loginViewModel: LoginViewModel(
-                loginUseCase: LoginUseCase(repository: repository)
+                loginUseCase: LoginUseCase(repository: repository),
+                restoreSessionUseCase: RestoreSessionUseCase(repository: repository),
+                sessionStore: sessionStore
+            ),
+            projectListViewModel: ProjectListViewModel(
+                fetchProjectsUseCase: FetchProjectsUseCase(repository: repository)
             ),
             taskViewModel: TaskViewModel(
                 fetchTasksUseCase: FetchTasksUseCase(repository: repository),
@@ -47,7 +56,8 @@ private final class FailingOdooRemoteDataSource: OdooRemoteDataSourceProtocol {
     }
 
     func login(username: String, password: String) async throws -> Int { throw error }
-    func fetchTasks(uid: Int, password: String, assignedOnly: Bool) async throws -> [TaskDTO] { throw error }
+    func fetchProjects(uid: Int, password: String) async throws -> [ProjectDTO] { throw error }
+    func fetchTasks(uid: Int, password: String, projectId: Int, assignedOnly: Bool) async throws -> [TaskDTO] { throw error }
     func fetchTaskStages(uid: Int, password: String) async throws -> [TaskStageDTO] { throw error }
     func createTask(uid: Int, password: String, name: String, description: String, projectId: Int, deadline: String?) async throws { throw error }
     func updateTaskStatus(uid: Int, password: String, taskId: Int, stageId: Int) async throws { throw error }

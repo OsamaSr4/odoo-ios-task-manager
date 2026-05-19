@@ -2,23 +2,52 @@ import SwiftUI
 
 struct AppNavigationView: View {
     @StateObject private var loginViewModel: LoginViewModel
+    @StateObject private var projectListViewModel: ProjectListViewModel
     @StateObject private var taskViewModel: TaskViewModel
+    @State private var path: [AppRoute] = []
+    @State private var showUpdateProfileSheet = false
 
     init(viewModels: AppViewModels = AppDependencyContainer.makeAppViewModels()) {
         self._loginViewModel = StateObject(wrappedValue: viewModels.loginViewModel)
+        self._projectListViewModel = StateObject(wrappedValue: viewModels.projectListViewModel)
         self._taskViewModel = StateObject(wrappedValue: viewModels.taskViewModel)
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             rootView
+                .navigationDestination(for: AppRoute.self) { route in
+                    destination(for: route)
+                }
+        }
+        .onAppear {
+            if loginViewModel.isLoggedIn {
+                taskViewModel.setUsername(loginViewModel.username)
+            }
+        }
+        .sheet(isPresented: $showUpdateProfileSheet) {
+            UpdateProfileSheet(isPresented: $showUpdateProfileSheet, username: taskViewModel.username) { updatedUsername in
+                _Concurrency.Task {
+                    await taskViewModel.updateUserName(name: updatedUsername)
+                    taskViewModel.setUsername(updatedUsername)
+                }
+            }
         }
     }
 
     @ViewBuilder
     private var rootView: some View {
         if loginViewModel.isLoggedIn {
-            destination(for: .taskList)
+            ProjectListScreen(
+                viewModel: projectListViewModel,
+                username: taskViewModel.username,
+                onSelectProject: { project in
+                    path.append(.taskList(project))
+                },
+                onUpdateProfile: {
+                    showUpdateProfileSheet = true
+                }
+            )
         } else {
             LoginScreenView(viewModel: loginViewModel)
             .overlay(alignment: .bottom) {
@@ -28,7 +57,7 @@ struct AppNavigationView: View {
                 guard isLoggedIn else { return }
                 taskViewModel.setUsername(loginViewModel.username)
                 _Concurrency.Task {
-                    await taskViewModel.loadTasks()
+                    await projectListViewModel.loadProjects()
                 }
             }
         }
@@ -37,8 +66,14 @@ struct AppNavigationView: View {
     @ViewBuilder
     private func destination(for route: AppRoute) -> some View {
         switch route {
-        case .taskList:
-            TaskListScreen(viewModel: taskViewModel)
+        case .taskList(let project):
+            TaskListScreen(
+                viewModel: taskViewModel,
+                project: project,
+                onBackPressed: {
+                    path.removeLast()
+                }
+            )
         }
     }
 

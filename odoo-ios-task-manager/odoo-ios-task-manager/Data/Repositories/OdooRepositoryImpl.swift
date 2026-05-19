@@ -9,6 +9,11 @@ final class OdooRepositoryImpl: OdooRepositoryProtocol {
         self.remoteDataSource = remoteDataSource
     }
 
+    func restoreSession(uid: Int, password: String) {
+        self.uid = uid
+        self.password = password
+    }
+
     func login(username: String, password: String) async throws -> Int {
         let uid = try await remoteDataSource.login(username: username, password: password)
         self.uid = uid
@@ -16,21 +21,49 @@ final class OdooRepositoryImpl: OdooRepositoryProtocol {
         return uid
     }
 
-    func fetchTasks() async throws -> [TaskEntity] {
+    func fetchProjects() async throws -> [ProjectEntity] {
+        let projects = try await remoteDataSource.fetchProjects(
+            uid: try currentUID(),
+            password: try currentPassword()
+        )
+
+        return projects.map(map)
+    }
+
+    func fetchTasks(projectId: Int) async throws -> [TaskEntity] {
+        guard projectId > 0 else {
+            throw OdooError.validation("Project id must be greater than 0.")
+        }
+
         let uid = try currentUID()
         let password = try currentPassword()
 
         do {
-            let assignedTasks = try await remoteDataSource.fetchTasks(uid: uid, password: password, assignedOnly: true)
+            let assignedTasks = try await remoteDataSource.fetchTasks(
+                uid: uid,
+                password: password,
+                projectId: projectId,
+                assignedOnly: true
+            )
             if !assignedTasks.isEmpty {
                 return assignedTasks.map(map)
             }
         } catch {
-            let fallbackTasks = try await remoteDataSource.fetchTasks(uid: uid, password: password, assignedOnly: false)
+            let fallbackTasks = try await remoteDataSource.fetchTasks(
+                uid: uid,
+                password: password,
+                projectId: projectId,
+                assignedOnly: false
+            )
             return fallbackTasks.map(map)
         }
 
-        let fallbackTasks = try await remoteDataSource.fetchTasks(uid: uid, password: password, assignedOnly: false)
+        let fallbackTasks = try await remoteDataSource.fetchTasks(
+            uid: uid,
+            password: password,
+            projectId: projectId,
+            assignedOnly: false
+        )
         return fallbackTasks.map(map)
     }
 
@@ -118,6 +151,10 @@ final class OdooRepositoryImpl: OdooRepositoryProtocol {
             stageName: dto.stageName,
             deadline: dto.deadline
         )
+    }
+
+    private func map(_ dto: ProjectDTO) -> ProjectEntity {
+        ProjectEntity(id: dto.id, name: dto.name)
     }
 
     private func map(_ dto: TaskStageDTO) -> TaskStageEntity {

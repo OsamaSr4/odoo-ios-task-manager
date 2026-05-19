@@ -8,6 +8,7 @@ final class TaskViewModel: ObservableObject {
     @Published private(set) var isLoading = false
     @Published var errorMessage: String?
     @Published private(set) var username = "Guest User"
+    @Published private(set) var selectedProject: ProjectEntity?
 
     private let fetchTasksUseCase: FetchTasksUseCase
     private let fetchTaskStagesUseCase: FetchTaskStagesUseCase
@@ -33,29 +34,36 @@ final class TaskViewModel: ObservableObject {
         self.username = username
     }
 
-    func loadTasks() async {
+    func loadTasks(for project: ProjectEntity) async {
         await performLoading {
+            self.selectedProject = project
             self.taskStatusOptions = try await makeStatusOptions()
-            self.tasks = try await fetchTasksUseCase.execute()
+            self.tasks = try await fetchTasksUseCase.execute(projectId: project.id)
         }
     }
 
-    func createTask(name: String, description: String, projectId: Int, deadline: String?) async {
+    func createTask(name: String, description: String, deadline: String?) async {
         await performLoading {
+            guard let selectedProject else {
+                throw OdooError.validation("Please select a project first.")
+            }
+
             try await createTaskUseCase.execute(
                 name: name,
                 description: description,
-                projectId: projectId,
+                projectId: selectedProject.id,
                 deadline: deadline
             )
-            self.tasks = try await fetchTasksUseCase.execute()
+            self.tasks = try await fetchTasksUseCase.execute(projectId: selectedProject.id)
         }
     }
 
     func updateStatus(taskId: Int, stageId: Int) async {
         await performLoading {
             try await updateTaskStatusUseCase.execute(taskId: taskId, stageId: stageId)
-            self.tasks = try await fetchTasksUseCase.execute()
+            if let selectedProject {
+                self.tasks = try await fetchTasksUseCase.execute(projectId: selectedProject.id)
+            }
         }
     }
 
