@@ -6,7 +6,7 @@ struct CreateTaskSheet: View {
     @State private var description: String = ""
     @State private var dueDate: Date = Date()
     
-    let onCreateTask: (Task) -> Void
+    let onCreateTask: (String, String, String) -> Void
     
     var body: some View {
         NavigationView {
@@ -22,7 +22,6 @@ struct CreateTaskSheet: View {
                     )
                 }
                 
-                // Description field
                 VStack(alignment: .leading, spacing: 8) {
                     AppText("Description", variant: .medium, size: 16)
                         .foregroundColor(.primary)
@@ -58,19 +57,13 @@ struct CreateTaskSheet: View {
                 AppButton(
                     "Create Task",
                     action: {
-                        let newTask = Task(
-                            title: title,
-                            description: description,
-                            status: .pending,
-                            dueDate: dueDate
-                        )
-                        onCreateTask(newTask)
+                        onCreateTask(title, description, formattedDueDate)
                         isPresented = false
                         resetFields()
                     }
                 )
                 .padding(.bottom)
-                .disabled(title.isEmpty || description.isEmpty)
+                .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
             .padding(20)
             .navigationTitle("New Task")
@@ -88,7 +81,9 @@ struct CreateTaskSheet: View {
     
     private var formattedDueDate: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d, yyyy"
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
         return formatter.string(from: dueDate)
     }
     
@@ -100,12 +95,10 @@ struct CreateTaskSheet: View {
 }
 
 #Preview {
-    @State var isPresented = true
-    
-    return CreateTaskSheet(
-        isPresented: $isPresented,
-        onCreateTask: { task in
-            print("Created task: \(task.title)")
+    CreateTaskSheet(
+        isPresented: .constant(true),
+        onCreateTask: { name, description, deadline in
+            print("Created task: \(name), description: \(description), deadline: \(deadline)")
         }
     )
 }

@@ -1,10 +1,10 @@
 import SwiftUI
 
 struct TaskCell: View {
-    let task: Task
+    let task: TaskEntity
     let onTap: (() -> Void)?
     
-    init(task: Task, onTap: (() -> Void)? = nil) {
+    init(task: TaskEntity, onTap: (() -> Void)? = nil) {
         self.task = task
         self.onTap = onTap
     }
@@ -13,28 +13,22 @@ struct TaskCell: View {
         Button(action: {
             onTap?()
         }) {
+            let status = task.progressStatus
+
             VStack(alignment: .leading, spacing: 8) {
-                // Title row with status tag
                 HStack {
-                    AppText(task.title, variant: .medium, size: 16)
+                    AppText(task.name, variant: .medium, size: 16)
                         .foregroundColor(.primary)
                     
                     Spacer()
                     
                     TagView(
-                        task.status.displayName,
-                        backgroundColor: task.status.color.background,
-                        textColor: task.status.color.text
+                        task.stageName ?? status.displayName,
+                        backgroundColor: status.color.background,
+                        textColor: status.color.text
                     )
                 }
-                
-                // Description
-                AppText(task.description, variant: .regular, size: 14)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(3)
-                
-                // Due date
+
                 HStack {
                     Image(systemName: "calendar")
                         .foregroundColor(.secondary)
@@ -55,19 +49,33 @@ struct TaskCell: View {
         }
         .buttonStyle(PlainButtonStyle())
     }
-    
+
     private var formattedDueDate: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM, d yyyy"
-        return formatter.string(from: task.dueDate)
+        guard let deadline = task.deadline, !deadline.isEmpty else {
+            return "No deadline"
+        }
+
+        let inputFormatter = DateFormatter()
+        inputFormatter.calendar = Calendar(identifier: .gregorian)
+        inputFormatter.locale = Locale(identifier: "en_US_POSIX")
+
+        for format in ["yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd"] {
+            inputFormatter.dateFormat = format
+            if let date = inputFormatter.date(from: deadline) {
+                let outputFormatter = DateFormatter()
+                outputFormatter.dateFormat = "MMM d, yyyy"
+                return outputFormatter.string(from: date)
+            }
+        }
+
+        return deadline
     }
 }
 
 #Preview {
     VStack(spacing: 12) {
-        TaskCell(task: Task.sampleTasks[0])
-        TaskCell(task: Task.sampleTasks[1])
-        TaskCell(task: Task.sampleTasks[2])
+        TaskCell(task: TaskEntity(id: 1, name: "Complete project documentation", stageId: 1, stageName: "New", deadline: "2026-03-15"))
+        TaskCell(task: TaskEntity(id: 2, name: "Review pull requests", stageId: 2, stageName: "In Progress", deadline: nil))
     }
     .padding()
     .background(Color(.systemGroupedBackground))

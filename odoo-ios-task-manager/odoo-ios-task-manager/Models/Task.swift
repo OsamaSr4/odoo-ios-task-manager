@@ -27,6 +27,36 @@ enum TaskStatus: String, CaseIterable {
             return (Color.green.opacity(0.1), Color.green)
         }
     }
+
+    init(stageId: Int?, stageName: String?) {
+        if stageName?.localizedCaseInsensitiveContains("done") == true ||
+            stageName?.localizedCaseInsensitiveContains("completed") == true {
+            self = .completed
+        } else if stageName?.localizedCaseInsensitiveContains("progress") == true ||
+                    stageName?.localizedCaseInsensitiveContains("today") == true ||
+                    stageName?.localizedCaseInsensitiveContains("week") == true ||
+                    stageName?.localizedCaseInsensitiveContains("month") == true ||
+                    stageName?.localizedCaseInsensitiveContains("later") == true ||
+                    stageName?.localizedCaseInsensitiveContains("task") == true {
+            self = .inProgress
+        } else {
+            self = .pending
+        }
+    }
+}
+
+struct TaskStatusOption: Identifiable, Equatable {
+    let status: TaskStatus
+    let stageId: Int
+    let stageName: String
+
+    var id: TaskStatus { status }
+}
+
+extension TaskEntity {
+    var progressStatus: TaskStatus {
+        TaskStatus(stageId: stageId, stageName: stageName)
+    }
 }
 
 struct Task: Identifiable {

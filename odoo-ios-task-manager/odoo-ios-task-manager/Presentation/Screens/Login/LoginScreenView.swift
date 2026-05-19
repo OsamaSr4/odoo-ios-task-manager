@@ -1,14 +1,14 @@
 import SwiftUI
 
 struct LoginScreenView: View {
-    @State private var email = ""
-    @State private var password = ""
+    @ObservedObject var viewModel: LoginViewModel
+    @State private var email = OdooConfig.defaultUsername
+    @State private var password = OdooConfig.defaultPassword
     @State private var rememberMe = false
     @State private var selectedRole = "Employee"
-    private let onLogin: (String, String) -> Void
     
-    init(onLogin: @escaping (String, String) -> Void = { _, _ in }) {
-        self.onLogin = onLogin
+    init(viewModel: LoginViewModel = AppDependencyContainer.makeAppViewModels().loginViewModel) {
+        self.viewModel = viewModel
     }
     
     var body: some View {
@@ -60,8 +60,10 @@ struct LoginScreenView: View {
                     leadingIcon: Image(systemName: "lock")
                 )
             }
-            AppButton("Login", variant: .primary) {
-                onLogin(email, password)
+            AppButton("Login", variant: .primary, isLoading: viewModel.isLoading) {
+                _Concurrency.Task {
+                    await viewModel.login(username: email, password: password)
+                }
             }
             .padding(.top, 8)
         }
@@ -117,4 +119,3 @@ struct LoginScreenView: View {
     .preferredColorScheme(.dark)
     .background(Color.black)
 }
-

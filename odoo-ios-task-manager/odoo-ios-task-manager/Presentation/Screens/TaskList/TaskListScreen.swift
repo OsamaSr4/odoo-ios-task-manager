@@ -1,9 +1,8 @@
 import SwiftUI
 
 struct TaskListScreen: View {
-    @State private var tasks: [Task] = Task.sampleTasks
-    @State private var selectedTask: Task?
-    @State private var username : String = "Osama Iqbal"
+    @ObservedObject var viewModel: TaskViewModel
+    @State private var selectedTask: TaskEntity?
     
     @State private var showCreateTaskSheet = false
     @State private var showUpdateProfileSheet = false
@@ -12,7 +11,7 @@ struct TaskListScreen: View {
         VStack(spacing: 0) {
             // AppBar
             AppBar(title: "Tasks") {
-                AvatarView.small(name: username) {
+                AvatarView.small(name: viewModel.username) {
                     showUpdateProfileSheet.toggle()
                 }
             } rightContent: {
@@ -31,7 +30,7 @@ struct TaskListScreen: View {
                         AppText("Welcome", variant: .bold, size: 24)
                             .foregroundColor(.primary)
                         
-                        AppText(username, variant: .medium, size: 18)
+                        AppText(viewModel.username, variant: .medium, size: 18)
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -39,22 +38,44 @@ struct TaskListScreen: View {
                     
                     // Task list
                     LazyVStack(spacing: 12) {
-                        ForEach(tasks) { task in
+                        ForEach(viewModel.tasks) { task in
                             TaskCell(task: task) {
                                 selectedTask = task
                             }
                         }
                     }
                     .padding(.horizontal, 16)
+
+                    if viewModel.tasks.isEmpty && !viewModel.isLoading {
+                        AppText("No tasks found", variant: .regular)
+                            .foregroundColor(.secondary)
+                            .padding(.top, 24)
+                    }
                 }
                 .padding(.vertical, 20)
             }
             .background(Color(.systemGroupedBackground))
+            if viewModel.isLoading {
+                ProgressView()
+                    .padding()
+            }
+            if let errorMessage = viewModel.errorMessage {
+                AppText(errorMessage, variant: .regular, color: .red)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 12)
+            }
         }
         .navigationBarHidden(true)
+        .task {
+            if viewModel.tasks.isEmpty {
+                await viewModel.loadTasks()
+            }
+        }
         .sheet(isPresented: $showUpdateProfileSheet) {
-            UpdateProfileSheet(isPresented: $showUpdateProfileSheet, username: username) { updatedUsername in
-                self.username = updatedUsername
+            UpdateProfileSheet(isPresented: $showUpdateProfileSheet, username: viewModel.username) { updatedUsername in
+                _Concurrency.Task {
+                    await viewModel.updateUserName(name: updatedUsername)
+                }
             }
         }
         .sheet(isPresented: $showCreateTaskSheet) {
@@ -74,30 +95,32 @@ struct TaskListScreen: View {
                     }
                 ),
                 task: task,
+                statusOptions: viewModel.taskStatusOptions,
                 onUpdateStatus: updateTaskStatus
             )
         }
     }
-    
-    private func handleTaskCreation(_ task: Task) {
-        tasks.append(task)
-    }
-    
-    private func updateTaskStatus(to status: TaskStatus) {
-        guard let selectedTask = selectedTask else { return }
-        
-        if let index = tasks.firstIndex(where: { $0.id == selectedTask.id }) {
-            tasks[index] = Task(
-                id: selectedTask.id,
-                title: selectedTask.title,
-                description: selectedTask.description,
-                status: status,
-                dueDate: selectedTask.dueDate
+
+    private func handleTaskCreation(name: String, description: String, deadline: String) {
+        _Concurrency.Task {
+            await viewModel.createTask(
+                name: name,
+                description: description,
+                projectId: OdooConfig.defaultProjectId,
+                deadline: deadline
             )
+        }
+    }
+
+    private func updateTaskStatus(to option: TaskStatusOption) {
+        guard let selectedTask else { return }
+
+        _Concurrency.Task {
+            await viewModel.updateStatus(taskId: selectedTask.id, stageId: option.stageId)
         }
     }
 }
 
 #Preview {
-    TaskListScreen()
+    TaskListScreen(viewModel: AppDependencyContainer.makeTaskViewModel())
 }

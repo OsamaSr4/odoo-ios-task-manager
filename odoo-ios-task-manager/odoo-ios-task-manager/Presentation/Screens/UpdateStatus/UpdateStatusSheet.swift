@@ -2,28 +2,46 @@ import SwiftUI
 
 struct UpdateStatusSheet: View {
     @Binding var isPresented: Bool
-    let task: Task
-    let onUpdateStatus: (TaskStatus) -> Void
+    let task: TaskEntity
+    let statusOptions: [TaskStatusOption]
+    let onUpdateStatus: (TaskStatusOption) -> Void
+
+    init(
+        isPresented: Binding<Bool>,
+        task: TaskEntity,
+        statusOptions: [TaskStatusOption],
+        onUpdateStatus: @escaping (TaskStatusOption) -> Void
+    ) {
+        self._isPresented = isPresented
+        self.task = task
+        self.statusOptions = statusOptions
+        self.onUpdateStatus = onUpdateStatus
+    }
     
     var body: some View {
         NavigationView {
             VStack(spacing: 24) {
                 VStack(spacing: 24) {
-                    // Status options
                     VStack(alignment: .leading, spacing: 12) {
-                        AppText("Select New Status", variant: .medium, size: 16)
+                        AppText("Select Progress Status", variant: .medium, size: 16)
                             .foregroundColor(.primary)
-                        
-                        VStack(spacing: 8) {
-                            ForEach(TaskStatus.allCases, id: \.self) { status in
+
+                        if statusOptions.isEmpty {
+                            AppText("No task stages found", variant: .regular, size: 16)
+                                .foregroundColor(.secondary)
+                        } else {
+                            VStack(spacing: 8) {
+                                ForEach(statusOptions) { option in
+                                    let status = option.status
+
                                 Button(action: {
-                                    onUpdateStatus(status)
+                                    onUpdateStatus(option)
                                     isPresented = false
                                 }) {
                                     HStack {
-                                        AppText(status.displayName,variant: .bold,size:18)
+                                        AppText(option.stageName, variant: .bold, size: 18)
                                         Spacer()
-                                        if task.status == status {
+                                        if task.stageId == option.stageId {
                                             Image(systemName: "checkmark.circle.fill")
                                                 .foregroundColor(.blue)
                                                 .font(.system(size: 20))
@@ -33,15 +51,16 @@ struct UpdateStatusSheet: View {
                                     .padding(.vertical, 12)
                                     .background(
                                         RoundedRectangle(cornerRadius: 12)
-                                            .fill(task.status == status ? Color.blue.opacity(0.1) : Color.clear)
+                                            .fill(task.stageId == option.stageId ? Color.blue.opacity(0.1) : Color.clear)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 12)
-                                                    .stroke(task.status == status ? Color.blue : Color.clear, lineWidth: 2)
+                                                    .stroke(task.stageId == option.stageId ? Color.blue : Color.clear, lineWidth: 2)
                                             )
                                     )
                                 }
                                 .buttonStyle(PlainButtonStyle())
                             }
+                        }
                         }
                     }
                     
@@ -67,14 +86,18 @@ struct UpdateStatusSheet: View {
 }
 
 #Preview {
-    @State var isPresented = true
-    let sampleTask = Task.sampleTasks[0]
+    let sampleTask = TaskEntity(id: 1, name: "Sample Task", stageId: 1, stageName: "New", deadline: "2026-03-15")
     
     return UpdateStatusSheet(
-        isPresented: $isPresented,
+        isPresented: .constant(true),
         task: sampleTask,
-        onUpdateStatus: { status in
-            print("Updated status to: \(status.displayName)")
+        statusOptions: [
+            TaskStatusOption(status: .pending, stageId: 1, stageName: "Inbox"),
+            TaskStatusOption(status: .inProgress, stageId: 2, stageName: "Tasks"),
+            TaskStatusOption(status: .completed, stageId: 3, stageName: "Done")
+        ],
+        onUpdateStatus: { option in
+            print("Updated status to: \(option.stageName)")
         }
     )
 }
