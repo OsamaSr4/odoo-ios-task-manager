@@ -5,6 +5,7 @@ struct ProjectListScreen: View {
     let username: String
     let onSelectProject: (ProjectEntity) -> Void
     let onUpdateProfile: () -> Void
+    let onLogout: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -13,7 +14,12 @@ struct ProjectListScreen: View {
                     onUpdateProfile()
                 }
             } rightContent: {
-                Color.clear
+                Button(action: onLogout) {
+                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundColor(.primary)
+                }
+                .buttonStyle(PlainButtonStyle())
             }
 
             ScrollView {
@@ -93,7 +99,8 @@ struct ProjectListScreen: View {
         viewModel: ProjectListViewModel(fetchProjectsUseCase: FetchProjectsUseCase(repository: OdooRepositoryImpl(remoteDataSource: FailingPreviewOdooRemoteDataSource()))),
         username: "Guest User",
         onSelectProject: { _ in },
-        onUpdateProfile: {}
+        onUpdateProfile: {},
+        onLogout: {}
     )
 }
 

@@ -25,6 +25,13 @@ struct AppNavigationView: View {
                 taskViewModel.setUsername(loginViewModel.username)
             }
         }
+        .onChange(of: loginViewModel.isLoggedIn) { _, isLoggedIn in
+            guard isLoggedIn else { return }
+            taskViewModel.setUsername(loginViewModel.username)
+            _Concurrency.Task {
+                await projectListViewModel.loadProjects()
+            }
+        }
         .sheet(isPresented: $showUpdateProfileSheet) {
             UpdateProfileSheet(isPresented: $showUpdateProfileSheet, username: taskViewModel.username) { updatedUsername in
                 _Concurrency.Task {
@@ -40,25 +47,22 @@ struct AppNavigationView: View {
         if loginViewModel.isLoggedIn {
             ProjectListScreen(
                 viewModel: projectListViewModel,
-                username: taskViewModel.username,
+                username: loginViewModel.username,
                 onSelectProject: { project in
                     path.append(.taskList(project))
                 },
                 onUpdateProfile: {
                     showUpdateProfileSheet = true
+                },
+                onLogout: {
+                    path.removeAll()
+                    loginViewModel.logout()
                 }
             )
         } else {
             LoginScreenView(viewModel: loginViewModel)
             .overlay(alignment: .bottom) {
                 messageView
-            }
-            .onChange(of: loginViewModel.isLoggedIn) { _, isLoggedIn in
-                guard isLoggedIn else { return }
-                taskViewModel.setUsername(loginViewModel.username)
-                _Concurrency.Task {
-                    await projectListViewModel.loadProjects()
-                }
             }
         }
     }
